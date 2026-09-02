@@ -18,12 +18,18 @@
 - جست‌وجو بر اساس نام غذا، توضیح، ماده اولیه و برچسب
 - فیلتر دسته‌بندی: کیک، شیرینی، دسر، سالم و سایر دسته‌های داده
 - نمایش زمان آماده‌سازی، زمان پخت، زمان کل، تعداد نفرات و سطح سختی
-- افزودن و حذف از علاقه‌مندی‌ها در اجرای برنامه
+- افزودن و حذف از علاقه‌مندی‌ها
 - صفحه مستقل علاقه‌مندی‌ها
-- Drawer استاندارد AS Team
+- ذخیره دائمی علاقه‌مندی‌ها و تنظیمات در Android با `SharedPreferences`
+- حفظ داده‌های کاربر هنگام نصب نسخه جدید، با ثابت ماندن Package و امضای انتشار
+- Drawer راست‌چین و آیکون‌دار مطابق استاندارد مشترک AS Team
+- تنظیمات و اشتراک‌گذاری در ابتدای Drawer
 - خانه، علاقه‌مندی‌ها، تنظیمات، اشتراک‌گذاری، درباره نرم‌افزار و تماس با ما
-- پشتیبانی از Android، iOS، Desktop، Web/PWA، Android TV و Automotive در ساختار پروژه
+- Share Sheet واقعی Android برای معرفی برنامه
+- دکمه بررسی نسخه جدید و اتصال به صفحه Releases پروژه
+- پشتیبانی ساختاری از Android، iOS، Desktop، Web/PWA، Android TV و Automotive
 - انیمیشن‌های Shared Element و افکت حرکتی تصویر مبتنی بر سنسور در پلتفرم‌های پشتیبانی‌شده
+- CI برای Build و کنترل Android Debug/Release، TV، Automotive، Desktop و Web
 
 ## ساختار پروژه
 
@@ -40,12 +46,14 @@ docs/            Generated/static web assets and documentation
 
 ## فایل‌های اصلی
 
-- `shared/src/commonMain/kotlin/App.kt`: ناوبری اصلی و Drawer
+- `shared/src/commonMain/kotlin/App.kt`: ناوبری اصلی، Drawer و State مشترک
+- `shared/src/androidMain/kotlin/main.android.kt`: persistence، Share و Update actions در Android
 - `shared/src/commonMain/kotlin/model/Recipe.kt`: مدل دستور غذا
 - `shared/src/commonMain/kotlin/model/ExampleData.kt`: دیتای آفلاین دستورها
 - `shared/src/commonMain/kotlin/recipeslist/RecipesList.kt`: جست‌وجو، دسته‌بندی و فهرست
 - `shared/src/commonMain/kotlin/recipeslist/RecipeListItem.kt`: کارت دستور و علاقه‌مندی
 - `shared/src/commonMain/kotlin/details/`: صفحه جزئیات، مواد و مراحل
+- `.github/workflows/build.yml`: Build و کنترل خروجی‌ها
 - `docs/FA_COMMENTING_GUIDE.md`: استاندارد کامنت‌نویسی فارسی AS Team
 
 ## Build اندروید
@@ -54,15 +62,17 @@ docs/            Generated/static web assets and documentation
 
 ```bash
 ./gradlew :androidApp:assembleDebug
+./gradlew :androidApp:assembleRelease
 ```
 
-خروجی Debug در مسیر زیر تولید می‌شود:
+خروجی‌ها در مسیرهای زیر تولید می‌شوند:
 
 ```text
 androidApp/build/outputs/apk/debug/
+androidApp/build/outputs/apk/release/
 ```
 
-برای Release امضاشده باید keystore اختصاصی AS Team در محیط امن CI یا سیستم توسعه تنظیم شود. Keystore، رمزها و کلیدهای امضا نباید داخل Git ذخیره شوند.
+Release تولیدشده بدون keystore اختصاصی، unsigned است. برای APK قابل انتشار باید keystore اختصاصی AS Team در محیط امن CI یا سیستم توسعه تنظیم شود. Keystore، رمزها و کلیدهای امضا نباید داخل Git ذخیره شوند.
 
 ## Build وب
 
@@ -80,12 +90,13 @@ androidApp/build/outputs/apk/debug/
 2. `versionName` مطابق نسخه انتشار تغییر کند.
 3. `applicationId = com.asteam.ashpazyar` ثابت بماند.
 4. امضای Release با همان کلید انتشار قبلی انجام شود.
-5. داده‌های کاربر و تنظیمات در Migrationهای نسخه‌های بعدی حفظ شوند.
-6. قبل از Release، CI و Build محلی بررسی شوند.
+5. کلیدهای `SharedPreferences` فعلی حذف یا بدون Migration تغییر نام داده نشوند.
+6. داده‌ها و تنظیمات کاربر در Migrationهای نسخه‌های بعدی حفظ شوند.
+7. قبل از Release، CI و Build نهایی بررسی شوند.
 
-## برنامه توسعه بعدی
+## وضعیت محصول
 
-نسخه پایه محصول تکمیل شده است. قابلیت‌های توسعه‌ای بعدی می‌توانند شامل ذخیره دائمی علاقه‌مندی‌ها، دیتابیس محلی قابل ویرایش، افزودن دستور توسط کاربر، لیست خرید، برنامه غذایی هفتگی، مقیاس خودکار مواد اولیه، تایمر پخت، Backup/Restore و بررسی نسخه جدید باشند.
+نسخه `1.0.0` به‌عنوان نسخه پایه قابل استفاده تکمیل شده است. قابلیت‌هایی مانند دیتابیس دستورهای قابل ویرایش توسط کاربر، لیست خرید، برنامه غذایی هفتگی، مقیاس خودکار مواد اولیه، تایمر پخت و Backup/Restore جزو توسعه‌های نسخه‌های بعدی هستند و برای عملکرد اصلی نسخه 1.0.0 الزامی نیستند.
 
 ## پشتیبانی
 
