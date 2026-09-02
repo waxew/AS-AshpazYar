@@ -19,11 +19,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.items as rowItems
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.Button
 import androidx.compose.material.Icon
@@ -86,6 +86,10 @@ fun RecipesListScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                // در RTL اولین عضو Row در سمت راست قرار می‌گیرد، بنابراین منو قبل از عنوان آمده است.
+                IconButton(onClick = onMenuClick) {
+                    Icon(Icons.Default.Menu, contentDescription = "باز کردن منو")
+                }
                 Column(Modifier.weight(1f)) {
                     Text(
                         text = if (showOnlyFavorites) "علاقه‌مندی‌ها" else "آشپزیار",
@@ -96,9 +100,6 @@ fun RecipesListScreen(
                         text = if (showOnlyFavorites) "دستورهای ذخیره‌شده شما" else "امروز چی درست کنیم؟",
                         style = MaterialTheme.typography.caption
                     )
-                }
-                IconButton(onClick = onMenuClick) {
-                    Icon(Icons.Default.Menu, contentDescription = "باز کردن منو")
                 }
             }
 
@@ -116,7 +117,7 @@ fun RecipesListScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item { Spacer(Modifier.size(8.dp)) }
-                items(categories) { category ->
+                rowItems(categories) { category ->
                     if (category == selectedCategory) {
                         Button(onClick = { selectedCategory = category }) { Text(category) }
                     } else {
@@ -141,7 +142,7 @@ fun RecipesListScreen(
                     columns = GridCells.Fixed(if (isLarge) 3 else 1),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(visibleItems, key = { it.id }) { recipe ->
+                    gridItems(visibleItems, key = { it.id }) { recipe ->
                         RecipeListItemWrapper(
                             scrollDirection = listState.isScrollingUp(),
                             child = {
