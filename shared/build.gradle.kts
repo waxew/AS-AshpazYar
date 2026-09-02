@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
+// ماژول مشترک آشپزیار؛ UI، مدل‌ها و منطق بین Android/iOS/Web/Desktop را نگه می‌دارد.
 plugins {
     kotlin("native.cocoapods")
     alias(libs.plugins.kotlin.multiplatform)
@@ -10,7 +11,6 @@ plugins {
 
 kotlin {
     androidTarget()
-
     jvm("desktop")
 
     js(IR) {
@@ -28,15 +28,14 @@ kotlin {
 
     cocoapods {
         version = "1.0.0"
-        summary = "Some description for the Shared Module"
-        homepage = "Link to the Shared Module homepage"
+        summary = "AS-AshpazYar shared Compose Multiplatform module"
+        homepage = "https://github.com/waxew/AS-AshpazYar"
         ios.deploymentTarget = "14.1"
         podfile = project.file("../iosApp/Podfile")
         framework {
             baseName = "shared"
             isStatic = true
         }
-        //extraSpecAttributes["resources"] = "['src/commonMain/resources/**', 'src/iosMain/resources/**']"
     }
 
     sourceSets {
@@ -63,8 +62,6 @@ kotlin {
         val desktopMain by getting {
             dependencies {
                 implementation(compose.desktop.common)
-                dependencies {
-                }
             }
         }
     }
@@ -72,7 +69,7 @@ kotlin {
 
 android {
     compileSdk = (findProperty("android.compileSdk") as String).toInt()
-    namespace = "com.recipeapp.common"
+    namespace = "com.asteam.ashpazyar.shared"
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     sourceSets["main"].res.srcDirs("src/androidMain/res")
