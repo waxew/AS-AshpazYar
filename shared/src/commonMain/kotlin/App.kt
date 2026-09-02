@@ -298,8 +298,9 @@ private fun SimpleHeader(title: String, onMenuClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(title, style = MaterialTheme.typography.h5, fontWeight = FontWeight.Bold)
+        // در RTL اولین عضو در سمت راست قرار می‌گیرد؛ همبرگر باید قبل از عنوان باشد.
         Text("☰", modifier = Modifier.clickable(onClick = onMenuClick).padding(12.dp), style = MaterialTheme.typography.h5)
+        Text(title, style = MaterialTheme.typography.h5, fontWeight = FontWeight.Bold)
     }
 }
 
