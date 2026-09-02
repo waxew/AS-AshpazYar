@@ -3,12 +3,10 @@ name: Build AshpazYar
 on:
   push:
     branches: [ "main", "feature/**" ]
-  pull_request:
-    branches: [ "main" ]
 
 # برای هر شاخه فقط آخرین Build لازم است؛ Push جدید Run قدیمی همان شاخه را لغو می‌کند.
 concurrency:
-  group: ashpazyar-${{ github.workflow }}-${{ github.ref }}
+  group: ashpazyar-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -28,15 +26,44 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x gradlew
 
-      - name: Build Android debug and Web distribution
-        run: ./gradlew :androidApp:assembleDebug :webApp:wasmJsBrowserDistribution --stacktrace
+      - name: Build Android, TV, Automotive, Desktop and Web
+        run: >-
+          ./gradlew
+          :androidApp:assembleDebug
+          :androidApp:assembleRelease
+          :tvApp:assembleDebug
+          :automotiveApp:assembleDebug
+          :desktopApp:compileKotlinDesktop
+          :webApp:wasmJsBrowserDistribution
+          --stacktrace
 
-      - name: Upload Android APK
+      - name: Upload Android Debug APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: AshpazYar-Android-Debug
           path: androidApp/build/outputs/apk/debug/*.apk
+
+      - name: Upload Android Release APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AshpazYar-Android-Release-Unsigned
+          path: androidApp/build/outputs/apk/release/*.apk
+
+      - name: Upload TV APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AshpazYar-TV-Debug
+          path: tvApp/build/outputs/apk/debug/*.apk
+
+      - name: Upload Automotive APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AshpazYar-Automotive-Debug
+          path: automotiveApp/build/outputs/apk/debug/*.apk
 
       - name: Upload Web build
         if: success()
