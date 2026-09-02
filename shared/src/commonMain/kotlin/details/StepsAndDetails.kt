@@ -1,5 +1,7 @@
 package details
 
+// بخش متنی جزئیات دستور؛ عنوان، توضیح، مشخصات پخت، مواد لازم و مراحل را به زبان فارسی نمایش می‌دهد.
+
 import AnimateInEffect
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -14,11 +16,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import model.Recipe
 
-
-/**
- * Created by abdulbasit on 29/07/2023.
- */
-
 @OptIn(ExperimentalSharedTransitionApi::class)
 internal fun LazyListScope.StepsAndDetails(
     animatedVisibilityScope: AnimatedContentScope,
@@ -27,16 +24,13 @@ internal fun LazyListScope.StepsAndDetails(
 ) {
     with(sharedTransactionScope) {
         item {
-
             Text(
                 text = recipe.title,
                 style = MaterialTheme.typography.h5,
                 fontWeight = FontWeight.W700,
                 modifier = Modifier.padding(top = 16.dp, start = 16.dp, end = 16.dp).then(
                     Modifier.sharedElement(
-                        rememberSharedContentState(
-                            key = "item-title-${recipe.id}"
-                        ),
+                        rememberSharedContentState(key = "item-title-${recipe.id}"),
                         animatedVisibilityScope,
                     )
                 )
@@ -45,36 +39,40 @@ internal fun LazyListScope.StepsAndDetails(
             Text(
                 text = recipe.description,
                 style = MaterialTheme.typography.body2,
-                modifier = Modifier.padding(top = 16.dp, start = 16.dp, end = 16.dp).then(
+                modifier = Modifier.padding(top = 12.dp, start = 16.dp, end = 16.dp).then(
                     Modifier.sharedElement(
-                        rememberSharedContentState(
-                            key = "recipe-description-${recipe.id}"
-                        ),
+                        rememberSharedContentState(key = "recipe-description-${recipe.id}"),
                         animatedVisibilityScope,
                     )
                 )
             )
 
+            Text(
+                text = "${recipe.category}  •  آماده‌سازی ${recipe.prepMinutes} دقیقه  •  پخت ${recipe.cookMinutes} دقیقه  •  ${recipe.servings} نفر  •  ${recipe.difficulty}",
+                style = MaterialTheme.typography.caption,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(top = 12.dp, start = 16.dp, end = 16.dp)
+            )
+
             AnimateInEffect(
                 recipe = recipe,
-                intervalStart = 0 / (recipe.instructions.size + recipe.ingredients.size + 2).toFloat(),
+                intervalStart = 0f,
                 content = {
                     Text(
-                        text = "INGREDIENTS",
+                        text = "مواد لازم",
                         style = MaterialTheme.typography.h6,
                         fontWeight = FontWeight.W700,
-                        modifier = Modifier.padding(top = 16.dp, start = 16.dp, end = 16.dp)
+                        modifier = Modifier.padding(top = 20.dp, start = 16.dp, end = 16.dp)
                     )
-                })
+                }
+            )
         }
 
         itemsIndexed(recipe.ingredients) { index, value ->
             AnimateInEffect(
                 intervalStart = (index + 1) / (recipe.instructions.size + recipe.ingredients.size + 1).toFloat(),
                 recipe = recipe,
-                content = {
-                    IngredientItem(recipe, value)
-                }
+                content = { IngredientItem(recipe, value) }
             )
         }
 
@@ -84,10 +82,10 @@ internal fun LazyListScope.StepsAndDetails(
                 intervalStart = (recipe.ingredients.size + 1) / (recipe.instructions.size + recipe.ingredients.size + 2).toFloat(),
                 content = {
                     Text(
-                        text = "STEPS",
+                        text = "مراحل پخت",
                         style = MaterialTheme.typography.h6,
                         fontWeight = FontWeight.W700,
-                        modifier = Modifier.padding(top = 16.dp, start = 16.dp, end = 16.dp)
+                        modifier = Modifier.padding(top = 20.dp, start = 16.dp, end = 16.dp)
                     )
                 }
             )
@@ -97,9 +95,8 @@ internal fun LazyListScope.StepsAndDetails(
             AnimateInEffect(
                 recipe = recipe,
                 intervalStart = (recipe.ingredients.size + index + 1) / (recipe.instructions.size + recipe.ingredients.size + 1).toFloat(),
-                content = {
-                    InstructionItem(recipe, index)
-                })
+                content = { InstructionItem(recipe, index) }
+            )
         }
     }
 }
