@@ -46,7 +46,7 @@ fun MainView(isLargeScreen: Boolean = false) {
         initialFavorites = initialFavorites,
         onFavoritesChanged = { favorites ->
             preferences.edit()
-                .putStringSet(KEY_FAVORITES, favorites.map(Int::toString).toSet())
+                .putStringSet(KEY_FAVORITES, favorites.map { it.toString() }.toSet())
                 .apply()
         },
         initialShowQuickHints = initialShowQuickHints,
