@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">Recipe App</string>
+    <!-- نام قابل نمایش نسخه Android TV -->
+    <string name="app_name">آشپزیار</string>
 </resources>
