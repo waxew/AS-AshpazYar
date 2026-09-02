@@ -1,4 +1,4 @@
-// هسته رابط کاربری آشپزیار؛ ناوبری، منوی کناری و حالت علاقه‌مندی‌ها را بین همه پلتفرم‌ها مدیریت می‌کند.
+// هسته رابط کاربری آشپزیار؛ ناوبری، Drawer استاندارد AS Team و Stateهای اصلی برنامه را مدیریت می‌کند.
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
@@ -17,12 +17,22 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Button
 import androidx.compose.material.Divider
 import androidx.compose.material.DrawerValue
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ModalDrawer
 import androidx.compose.material.Switch
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContactMail
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -36,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
@@ -51,32 +62,47 @@ import sensor.SensorManager
 
 /** صفحه‌های سطح اول برنامه که از Drawer قابل دسترسی هستند. */
 private enum class AppPage {
-    Home, Favorites, Settings, Share, About, Contact
+    Settings, Share, Home, Favorites, About, Contact
 }
 
+/**
+ * ورودی اصلی رابط آشپزیار.
+ * callbackهای persistence از commonMain تزریق می‌شوند تا Android داده کاربر را به‌صورت پایدار نگه دارد.
+ */
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun App(sensorManager: SensorManager?, isLarge: Boolean = false) {
+fun App(
+    sensorManager: SensorManager?,
+    isLarge: Boolean = false,
+    initialFavorites: Set<Int> = emptySet(),
+    onFavoritesChanged: (Set<Int>) -> Unit = {},
+    initialShowQuickHints: Boolean = true,
+    onShowQuickHintsChanged: (Boolean) -> Unit = {},
+    onShareApp: () -> Unit = {},
+    onCheckForUpdates: () -> Unit = {}
+) {
     val fontFamily = getFontFamily()
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    val favorites = remember { mutableStateListOf<Int>() }
+    val favorites = remember(initialFavorites) {
+        mutableStateListOf<Int>().apply { addAll(initialFavorites) }
+    }
     var currentPage by remember { mutableStateOf(AppPage.Home) }
     var currentRecipe by remember { mutableStateOf(recipesList.first()) }
-    var showQuickHints by remember { mutableStateOf(true) }
+    var showQuickHints by remember(initialShowQuickHints) { mutableStateOf(initialShowQuickHints) }
 
     MaterialTheme(typography = getTypography(fontFamily)) {
-        SharedTransitionLayout {
-            val sharedTransitionScope = this
-            NavHost(
-                navController = navController,
-                startDestination = RecipeAppScreen.List.name,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                composable(route = RecipeAppScreen.List.name) {
-                    // RTL در سطح Drawer اعمال می‌شود تا منوی همبرگری از سمت راست صفحه باز شود.
-                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        // RTL در سطح کل برنامه اعمال می‌شود؛ Drawer نیز از سمت راست باز می‌شود.
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+            SharedTransitionLayout {
+                val sharedTransitionScope = this
+                NavHost(
+                    navController = navController,
+                    startDestination = RecipeAppScreen.List.name,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    composable(route = RecipeAppScreen.List.name) {
                         ModalDrawer(
                             drawerState = drawerState,
                             drawerContent = {
@@ -100,6 +126,7 @@ fun App(sensorManager: SensorManager?, isLarge: Boolean = false) {
                                     onToggleFavorite = { recipe ->
                                         if (recipe.id in favorites) favorites.remove(recipe.id)
                                         else favorites.add(recipe.id)
+                                        onFavoritesChanged(favorites.toSet())
                                     },
                                     onMenuClick = { scope.launch { drawerState.open() } },
                                     onClick = { recipe ->
@@ -110,19 +137,27 @@ fun App(sensorManager: SensorManager?, isLarge: Boolean = false) {
 
                                 AppPage.Settings -> SettingsPage(
                                     showQuickHints = showQuickHints,
-                                    onShowQuickHintsChange = { showQuickHints = it },
+                                    onShowQuickHintsChange = { enabled ->
+                                        showQuickHints = enabled
+                                        onShowQuickHintsChanged(enabled)
+                                    },
+                                    onCheckForUpdates = onCheckForUpdates,
                                     onMenuClick = { scope.launch { drawerState.open() } }
                                 )
 
                                 AppPage.Share -> InfoPage(
                                     title = "اشتراک‌گذاری آشپزیار",
-                                    body = "آشپزیار را به دوستان و خانواده معرفی کنید. نسخه وب و بسته‌های انتشار از مخزن رسمی AS Team ارائه می‌شوند.",
+                                    body = "آشپزیار را به دوستان و خانواده معرفی کنید. نسخه‌های رسمی از مخزن AS Team ارائه می‌شوند.",
+                                    actionLabel = "اشتراک‌گذاری برنامه",
+                                    onAction = onShareApp,
                                     onMenuClick = { scope.launch { drawerState.open() } }
                                 )
 
                                 AppPage.About -> InfoPage(
                                     title = "درباره نرم‌افزار",
                                     body = "آشپزیار یک دستیار آشپزی چندسکویی و آفلاین‌محور از AS Team است. نسخه 1.0.0 شامل جست‌وجو، دسته‌بندی، علاقه‌مندی، اطلاعات زمان و سختی، مواد لازم و مراحل پخت است.\n\nDevelop by AS Team Group\nVersion 1.0.0",
+                                    actionLabel = "بررسی نسخه جدید",
+                                    onAction = onCheckForUpdates,
                                     onMenuClick = { scope.launch { drawerState.open() } }
                                 )
 
@@ -134,24 +169,24 @@ fun App(sensorManager: SensorManager?, isLarge: Boolean = false) {
                             }
                         }
                     }
-                }
 
-                composable(route = RecipeAppScreen.Details.name) {
-                    RecipeDetails(
-                        animatedVisibilityScope = this,
-                        sharedTransactionScope = sharedTransitionScope,
-                        isLarge = isLarge,
-                        sensorManager = sensorManager,
-                        recipe = currentRecipe,
-                        goBack = { navController.popBackStack() }
-                    )
+                    composable(route = RecipeAppScreen.Details.name) {
+                        RecipeDetails(
+                            animatedVisibilityScope = this,
+                            sharedTransactionScope = sharedTransitionScope,
+                            isLarge = isLarge,
+                            sensorManager = sensorManager,
+                            recipe = currentRecipe,
+                            goBack = { navController.popBackStack() }
+                        )
+                    }
                 }
             }
         }
     }
 }
 
-/** محتوای Drawer استاندارد AS Team برای دسترسی سریع به بخش‌های اصلی برنامه. */
+/** Drawer راست‌چین استاندارد AS Team. تنظیمات و اشتراک‌گذاری در ابتدای آیتم‌ها قرار دارند. */
 @Composable
 private fun AshpazYarDrawer(currentPage: AppPage, onSelect: (AppPage) -> Unit) {
     Column(
@@ -163,7 +198,11 @@ private fun AshpazYarDrawer(currentPage: AppPage, onSelect: (AppPage) -> Unit) {
             modifier = Modifier.size(76.dp).clip(CircleShape).background(primary),
             contentAlignment = Alignment.Center
         ) {
-            Text("AS", style = MaterialTheme.typography.h5, fontWeight = FontWeight.Bold)
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = "پروفایل",
+                modifier = Modifier.size(38.dp)
+            )
         }
         Spacer(Modifier.height(10.dp))
         Text("آشپزیار", style = MaterialTheme.typography.h5, fontWeight = FontWeight.Bold)
@@ -171,21 +210,24 @@ private fun AshpazYarDrawer(currentPage: AppPage, onSelect: (AppPage) -> Unit) {
         Spacer(Modifier.height(20.dp))
         Divider()
 
-        DrawerItem("خانه", currentPage == AppPage.Home) { onSelect(AppPage.Home) }
-        DrawerItem("علاقه‌مندی‌ها", currentPage == AppPage.Favorites) { onSelect(AppPage.Favorites) }
-        DrawerItem("تنظیمات", currentPage == AppPage.Settings) { onSelect(AppPage.Settings) }
-        DrawerItem("اشتراک‌گذاری", currentPage == AppPage.Share) { onSelect(AppPage.Share) }
-        DrawerItem("درباره نرم‌افزار", currentPage == AppPage.About) { onSelect(AppPage.About) }
-        DrawerItem("تماس با ما", currentPage == AppPage.Contact) { onSelect(AppPage.Contact) }
+        DrawerItem("تنظیمات", Icons.Default.Settings, currentPage == AppPage.Settings) { onSelect(AppPage.Settings) }
+        DrawerItem("اشتراک‌گذاری", Icons.Default.Share, currentPage == AppPage.Share) { onSelect(AppPage.Share) }
+        DrawerItem("خانه", Icons.Default.Home, currentPage == AppPage.Home) { onSelect(AppPage.Home) }
+        DrawerItem("علاقه‌مندی‌ها", Icons.Default.Favorite, currentPage == AppPage.Favorites) { onSelect(AppPage.Favorites) }
+        DrawerItem("درباره نرم‌افزار", Icons.Default.Info, currentPage == AppPage.About) { onSelect(AppPage.About) }
+        DrawerItem("تماس با ما", Icons.Default.ContactMail, currentPage == AppPage.Contact) { onSelect(AppPage.Contact) }
     }
 }
 
+/** یک ردیف آیکون‌دار Drawer با نمایش وضعیت انتخاب‌شده. */
 @Composable
-private fun DrawerItem(title: String, selected: Boolean, onClick: () -> Unit) {
+private fun DrawerItem(title: String, icon: ImageVector, selected: Boolean, onClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 14.dp, horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 13.dp, horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        Icon(imageVector = icon, contentDescription = null, tint = if (selected) orangeDark else text)
         Text(
             text = title,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
@@ -194,11 +236,12 @@ private fun DrawerItem(title: String, selected: Boolean, onClick: () -> Unit) {
     }
 }
 
-/** صفحه تنظیمات سبک نسخه اول. تنظیمات این بخش در طول اجرای برنامه اعمال می‌شوند. */
+/** تنظیمات سبک برنامه؛ State آن در Android به شکل پایدار ذخیره می‌شود. */
 @Composable
 private fun SettingsPage(
     showQuickHints: Boolean,
     onShowQuickHintsChange: (Boolean) -> Unit,
+    onCheckForUpdates: () -> Unit,
     onMenuClick: () -> Unit
 ) {
     Column(Modifier.fillMaxSize().background(sugar).padding(20.dp)) {
@@ -211,24 +254,40 @@ private fun SettingsPage(
         ) {
             Column(Modifier.weight(1f)) {
                 Text("راهنمای سریع", fontWeight = FontWeight.Bold)
-                Text("نمایش نکته‌های کوتاه آشپزی در نسخه‌های بعدی", style = MaterialTheme.typography.caption)
+                Text("نمایش نکته‌های کوتاه آشپزی", style = MaterialTheme.typography.caption)
             }
             Switch(checked = showQuickHints, onCheckedChange = onShowQuickHintsChange)
         }
         Spacer(Modifier.height(16.dp))
         Text("حالت آفلاین فعال است و برای مشاهده دستورهای داخلی به اینترنت نیاز نیست.")
+        Spacer(Modifier.height(24.dp))
+        Button(onClick = onCheckForUpdates) {
+            Text("بررسی نسخه جدید")
+        }
     }
 }
 
 /** صفحه متنی مشترک برای درباره، اشتراک‌گذاری و تماس. */
 @Composable
-private fun InfoPage(title: String, body: String, onMenuClick: () -> Unit) {
+private fun InfoPage(
+    title: String,
+    body: String,
+    actionLabel: String? = null,
+    onAction: () -> Unit = {},
+    onMenuClick: () -> Unit
+) {
     Column(
         modifier = Modifier.fillMaxSize().background(sugar).verticalScroll(rememberScrollState()).padding(20.dp)
     ) {
         SimpleHeader(title, onMenuClick)
         Spacer(Modifier.height(24.dp))
         Text(body, style = MaterialTheme.typography.body1)
+        if (actionLabel != null) {
+            Spacer(Modifier.height(24.dp))
+            Button(onClick = onAction) {
+                Text(actionLabel)
+            }
+        }
     }
 }
 
@@ -239,8 +298,8 @@ private fun SimpleHeader(title: String, onMenuClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text("☰", modifier = Modifier.clickable(onClick = onMenuClick).padding(12.dp), style = MaterialTheme.typography.h5)
         Text(title, style = MaterialTheme.typography.h5, fontWeight = FontWeight.Bold)
+        Text("☰", modifier = Modifier.clickable(onClick = onMenuClick).padding(12.dp), style = MaterialTheme.typography.h5)
     }
 }
 
