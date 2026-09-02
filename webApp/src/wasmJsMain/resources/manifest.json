@@ -1,5 +1,9 @@
 {
-  "name": "Recipe App",
+  "name": "آشپزیار",
+  "short_name": "آشپزیار",
+  "description": "دستیار آشپزی آفلاین و چندسکویی AS Team",
+  "lang": "fa",
+  "dir": "rtl",
   "icons": [
     {
       "src": "images/logo.png",
@@ -9,5 +13,6 @@
   ],
   "start_url": "/",
   "display": "standalone",
-  "background_color": "white"
+  "background_color": "#FBF5E9",
+  "theme_color": "#FBF5E9"
 }
