@@ -33,7 +33,7 @@ jobs:
           :androidApp:assembleRelease
           :tvApp:assembleDebug
           :automotiveApp:assembleDebug
-          :desktopApp:compileKotlinDesktop
+          :desktopApp:compileKotlinJvm
           :webApp:wasmJsBrowserDistribution
           --stacktrace
 
