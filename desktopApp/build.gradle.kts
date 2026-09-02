@@ -1,5 +1,6 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
+// تنظیمات نسخه دسکتاپ آشپزیار؛ target داخلی این ماژول JVM است و CI باید compileKotlinJvm را اجرا کند.
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.compose.compiler)
@@ -24,7 +25,7 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "RecipeApp-KMP"
+            packageName = "AS-AshpazYar"
             packageVersion = "1.0.0"
         }
     }
