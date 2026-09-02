@@ -25,6 +25,7 @@ import androidx.compose.material.Switch
 import androidx.compose.material.Text
 import androidx.compose.material.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -35,7 +36,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -72,60 +75,63 @@ fun App(sensorManager: SensorManager?, isLarge: Boolean = false) {
                 modifier = Modifier.fillMaxSize()
             ) {
                 composable(route = RecipeAppScreen.List.name) {
-                    ModalDrawer(
-                        drawerState = drawerState,
-                        drawerContent = {
-                            AshpazYarDrawer(
-                                currentPage = currentPage,
-                                onSelect = { page ->
-                                    currentPage = page
-                                    scope.launch { drawerState.close() }
-                                }
-                            )
-                        }
-                    ) {
-                        when (currentPage) {
-                            AppPage.Home, AppPage.Favorites -> RecipesListScreen(
-                                animatedVisibilityScope = this,
-                                sharedTransactionScope = sharedTransitionScope,
-                                isLarge = isLarge,
-                                items = recipesList,
-                                favorites = favorites.toSet(),
-                                showOnlyFavorites = currentPage == AppPage.Favorites,
-                                onToggleFavorite = { recipe ->
-                                    if (recipe.id in favorites) favorites.remove(recipe.id)
-                                    else favorites.add(recipe.id)
-                                },
-                                onMenuClick = { scope.launch { drawerState.open() } },
-                                onClick = { recipe ->
-                                    currentRecipe = recipe
-                                    navController.navigate(RecipeAppScreen.Details.name)
-                                }
-                            )
+                    // RTL در سطح Drawer اعمال می‌شود تا منوی همبرگری از سمت راست صفحه باز شود.
+                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                        ModalDrawer(
+                            drawerState = drawerState,
+                            drawerContent = {
+                                AshpazYarDrawer(
+                                    currentPage = currentPage,
+                                    onSelect = { page ->
+                                        currentPage = page
+                                        scope.launch { drawerState.close() }
+                                    }
+                                )
+                            }
+                        ) {
+                            when (currentPage) {
+                                AppPage.Home, AppPage.Favorites -> RecipesListScreen(
+                                    animatedVisibilityScope = this@composable,
+                                    sharedTransactionScope = sharedTransitionScope,
+                                    isLarge = isLarge,
+                                    items = recipesList,
+                                    favorites = favorites.toSet(),
+                                    showOnlyFavorites = currentPage == AppPage.Favorites,
+                                    onToggleFavorite = { recipe ->
+                                        if (recipe.id in favorites) favorites.remove(recipe.id)
+                                        else favorites.add(recipe.id)
+                                    },
+                                    onMenuClick = { scope.launch { drawerState.open() } },
+                                    onClick = { recipe ->
+                                        currentRecipe = recipe
+                                        navController.navigate(RecipeAppScreen.Details.name)
+                                    }
+                                )
 
-                            AppPage.Settings -> SettingsPage(
-                                showQuickHints = showQuickHints,
-                                onShowQuickHintsChange = { showQuickHints = it },
-                                onMenuClick = { scope.launch { drawerState.open() } }
-                            )
+                                AppPage.Settings -> SettingsPage(
+                                    showQuickHints = showQuickHints,
+                                    onShowQuickHintsChange = { showQuickHints = it },
+                                    onMenuClick = { scope.launch { drawerState.open() } }
+                                )
 
-                            AppPage.Share -> InfoPage(
-                                title = "اشتراک‌گذاری آشپزیار",
-                                body = "آشپزیار را به دوستان و خانواده معرفی کنید. نسخه وب و بسته‌های انتشار از مخزن رسمی AS Team ارائه می‌شوند.",
-                                onMenuClick = { scope.launch { drawerState.open() } }
-                            )
+                                AppPage.Share -> InfoPage(
+                                    title = "اشتراک‌گذاری آشپزیار",
+                                    body = "آشپزیار را به دوستان و خانواده معرفی کنید. نسخه وب و بسته‌های انتشار از مخزن رسمی AS Team ارائه می‌شوند.",
+                                    onMenuClick = { scope.launch { drawerState.open() } }
+                                )
 
-                            AppPage.About -> InfoPage(
-                                title = "درباره نرم‌افزار",
-                                body = "آشپزیار یک دستیار آشپزی چندسکویی و آفلاین‌محور از AS Team است. نسخه 1.0.0 شامل جست‌وجو، دسته‌بندی، علاقه‌مندی، اطلاعات زمان و سختی، مواد لازم و مراحل پخت است.\n\nDevelop by AS Team Group\nVersion 1.0.0",
-                                onMenuClick = { scope.launch { drawerState.open() } }
-                            )
+                                AppPage.About -> InfoPage(
+                                    title = "درباره نرم‌افزار",
+                                    body = "آشپزیار یک دستیار آشپزی چندسکویی و آفلاین‌محور از AS Team است. نسخه 1.0.0 شامل جست‌وجو، دسته‌بندی، علاقه‌مندی، اطلاعات زمان و سختی، مواد لازم و مراحل پخت است.\n\nDevelop by AS Team Group\nVersion 1.0.0",
+                                    onMenuClick = { scope.launch { drawerState.open() } }
+                                )
 
-                            AppPage.Contact -> InfoPage(
-                                title = "تماس با ما",
-                                body = "پشتیبانی و پیشنهادها:\nAS.Developers.Support@Gmail.Com",
-                                onMenuClick = { scope.launch { drawerState.open() } }
-                            )
+                                AppPage.Contact -> InfoPage(
+                                    title = "تماس با ما",
+                                    body = "پشتیبانی و پیشنهادها:\nAS.Developers.Support@Gmail.Com",
+                                    onMenuClick = { scope.launch { drawerState.open() } }
+                                )
+                            }
                         }
                     }
                 }
@@ -233,8 +239,8 @@ private fun SimpleHeader(title: String, onMenuClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(title, style = MaterialTheme.typography.h5, fontWeight = FontWeight.Bold)
         Text("☰", modifier = Modifier.clickable(onClick = onMenuClick).padding(12.dp), style = MaterialTheme.typography.h5)
+        Text(title, style = MaterialTheme.typography.h5, fontWeight = FontWeight.Bold)
     }
 }
 
